@@ -19,12 +19,12 @@ class TimeoutTileService : TileService() {
 
     // Matching icon resource IDs for each timeout level
     private val timeoutIcons = intArrayOf(
-        R.drawable.ic_moon_1,   // 15s
-        R.drawable.ic_moon_2,   // 30s
-        R.drawable.ic_moon_3,   // 1min
-        R.drawable.ic_moon_4,   // 2min
-        R.drawable.ic_moon_5,   // 5min
-        R.drawable.ic_moon_6,   // 10mi
+        R.drawable.ic_moon_15s,   // 15s
+        R.drawable.ic_moon_30s,   // 30s
+        R.drawable.ic_moon_1m,   // 1min
+        R.drawable.ic_moon_2m,   // 2min
+        R.drawable.ic_moon_5m,   // 5min
+        R.drawable.ic_moon_10m,   // 10mi
     )
 
     // SharedPreferences key
@@ -58,11 +58,29 @@ class TimeoutTileService : TileService() {
         tile.updateTile()
     }
 
+    private fun setInactiveTile() {
+        val tile = qsTile ?: return
+        tile.icon = android.graphics.drawable.Icon.createWithResource(
+            this,
+            R.drawable.ic_moon_disabled
+        )
+        tile.state = Tile.STATE_INACTIVE
+        tile.updateTile()
+    }
+
     // Called when tile becomes visible — sync icon to current system value
     override fun onStartListening() {
         super.onStartListening()
         if (!Settings.System.canWrite(this)) {
-            qsTile?.apply { state = Tile.STATE_UNAVAILABLE; updateTile() }
+            setInactiveTile()
+            return
+        }
+
+        // Check if tile is paused
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        val tileEnabled = prefs.getBoolean("tile_enabled", true)
+        if (!tileEnabled) {
+            setInactiveTile()
             return
         }
 
@@ -91,6 +109,11 @@ class TimeoutTileService : TileService() {
         if (!Settings.System.canWrite(this)) {
             return
         }
+
+        // Check if tile is paused
+        val prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE)
+        val tileEnabled = prefs.getBoolean("tile_enabled", true)
+        if (!tileEnabled) return
 
         // Advance to next index, wrap around at end
         val nextIndex = (getSavedIndex() + 1) % timeoutValues.size

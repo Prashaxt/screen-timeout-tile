@@ -11,6 +11,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -71,6 +72,13 @@ fun MainScreen(
 
 @Composable
 fun PermissionGrantedScreen() {
+    val context = LocalContext.current
+    val prefs = context.getSharedPreferences("timeout_prefs", android.content.Context.MODE_PRIVATE)
+
+    var isTileEnabled by remember {
+        mutableStateOf(prefs.getBoolean("tile_enabled", true))
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -78,11 +86,7 @@ fun PermissionGrantedScreen() {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "✓",
-            fontSize = 64.sp,
-            color = MaterialTheme.colorScheme.primary
-        )
+        Text(text = "✓", fontSize = 64.sp, color = MaterialTheme.colorScheme.primary)
         Spacer(modifier = Modifier.height(24.dp))
         Text(
             text = "Tile is active",
@@ -97,35 +101,51 @@ fun PermissionGrantedScreen() {
             textAlign = TextAlign.Center,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-        Spacer(modifier = Modifier.height(24.dp))
-        Text(
-            text = "How to add",
-            fontSize = 14.sp,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // --- Toggle Row ---
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column {
+                Text(
+                    text = "Tile enabled",
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = if (isTileEnabled) "Tap tile cycles timeout" else "Tile taps are paused",
+                    fontSize = 12.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Switch(
+                checked = isTileEnabled,
+                onCheckedChange = { enabled ->
+                    isTileEnabled = enabled
+                    prefs.edit().putBoolean("tile_enabled", enabled).apply()
+                }
+            )
+        }
+
+        Spacer(modifier = Modifier.height(32.dp))
+
+        // ... rest of your How to add steps unchanged
+        Text(text = "How to add", fontSize = 14.sp, fontWeight = FontWeight.Bold)
         Spacer(modifier = Modifier.height(12.dp))
         Column(
             modifier = Modifier.fillMaxWidth(),
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Text(
-                text = "Step 1: Swipe down to open your notification/quick settings panel",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = "Step 2: Tap the edit icon ",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Text(
-                text = "Step 3: Find the Timeout tile and drag it among your existing tiles",
-                fontSize = 14.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Text(text = "Step 1: Swipe down to open your notification/quick settings panel", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = "Step 2: Tap the edit icon", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(text = "Step 3: Find the Timeout tile and drag it among your existing tiles", fontSize = 14.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-
     }
 }
 
